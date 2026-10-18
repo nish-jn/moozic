@@ -5,7 +5,7 @@ lists, and the "up next" queue and play history are hand-written (no STL).
 
 ## Features
 
-- Playlists loaded from and saved to `text.txt`
+- Playlists loaded from and saved to `music_library.txt`
 - Next and previous song (previous uses a history stack)
 - "Play next" queue
 - Add new playlists and songs while running
@@ -23,13 +23,13 @@ g++ main.cpp -o moozic -ldl -lpthread -lm
 ./moozic
 ```
 
-## Library file format (`text.txt`)
+## Library file format (`music_library.txt`)
 
 ```
 #Rock
 Song name|/full/path/to/song.mp3
 Another song|/full/path/to/another.mp3
-#Chill
+#Jazz
 Song with no file
 ```
 
@@ -46,7 +46,7 @@ Song with no file
 
 - `song_list.h`: song nodes and playlists (doubly linked list)
 - `containers.h`: hand-written stack and queue
-- `audio.h`: miniaudio wrapper
+- `audio.h`: miniaudio wrapper for audio playback
 - `library.h`: the player logic
 - `main.cpp`: menu
 
