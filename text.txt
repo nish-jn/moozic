@@ -1,25 +1,5 @@
-#rock
-winds of boreas
-howl of the winter
-bite of the frost
-#pop
-akon
-b.spears
-r_god
-#jazz
-akechi's fav
-yusuke's fav
-amamiya's fav
-#demonrock
-moloch
-baal
-idk much about demons tbh so no more
-#e
-#f
-ssss
-ccccc
-qqqqq
-#chill
-lofi_1
-lofi_12
-lofi_13
+#Rock
+Wind of boreas|/home/yourname/music/wind.mp3
+Howl of the snowy wind|/home/yourname/music/howl.mp3
+#Chill
+Moonlit snow

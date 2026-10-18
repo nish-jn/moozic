@@ -1,20 +1,52 @@
+#define MINIAUDIO_IMPLEMENTATION
 #include<iostream>
 #include<string>
 #include<fstream>
-
+#include"miniaudio.h"
 using namespace std;
+
+//audio wrapper
+    class Audio{
+        ma_engine engine;
+        ma_sound sound;
+        bool engineOk=false, soundLoaded=false;
+    public:
+        Audio()
+        {
+            engineOk=(ma_engine_init(NULL,&engine)==MA_SUCCESS);
+            if(!engineOk) cout<<"Audio engine failed\n";
+        }
+        void stop()
+        {
+            if(soundLoaded){ ma_sound_uninit(&sound); soundLoaded=false; }
+        }
+        void playFile(const string& path)
+        {
+            if(!engineOk) return;
+            stop();                                   // stop the old song first
+            if(path.empty()){ cout<<"(no file for this song)\n"; return; }
+            if(ma_sound_init_from_file(&engine,path.c_str(),0,NULL,NULL,&sound)!=MA_SUCCESS)
+            { cout<<"Could not open "<<path<<"\n"; return; }
+            soundLoaded=true;
+            ma_sound_start(&sound);
+        }
+        ~Audio(){ stop(); if(engineOk) ma_engine_uninit(&engine); }
+    };
+
 
 //For indivisual playlist:
 struct Node{
     string song_name;
+    string path;
     Node* next;
     Node* prev;
 
-    Node(string sn)
+    Node(string sn, string p="")
     {
         next=nullptr;
         prev=nullptr;
         song_name=sn;
+        path=p;
     }
 };
 
@@ -31,9 +63,9 @@ class LinkedPlayList{
     }
     //eats string to give name to new song and adds it to the playlist (vertical branch)
     // that it belongs to
-    void addSong(string sn)
+    void addSong(string sn, string p="")
     {
-        Node* newNode=new Node(sn);
+        Node* newNode=new Node(sn,p);
         if(head==nullptr)
         {
             head=newNode;
@@ -195,6 +227,7 @@ class LinkerOfPlayLists{
     Node* currentSong;
     Queue q;
     Stack s;
+    Audio audio;
 
     public:
         int check=0;
@@ -245,24 +278,32 @@ class LinkerOfPlayLists{
                     addPlayList(line.substr(1));
 
                 }
-                else if(tail!=nullptr){tail->list.addSong(line);}
+                else if(tail!=nullptr)
+                {
+                    size_t bar = line.find('|');
+                    if(bar==string::npos){tail->list.addSong(line);} //no path
+                    else{tail->list.addSong(line.substr(0,bar),line.substr(bar+1));}
+                }
 
             }
             return 0;
         }
         void utmPlayList()//user to memory
         {
-            string line;
+            string line, path;
             cout<<"Enter name of the new play list: ";
             getline(cin,line);
-                addPlayList(line);
-                int j=1;
-                while(true){
-                    cout<<"Enter the name of song number "<<j++<<"(enter 0 to stop): ";
-                    getline(cin, line);
-                    if(line=="0"){break;}
-                    tail->list.addSong(line);
-                }
+            addPlayList(line);
+            int j=1;
+            while(true){
+                cout<<"Enter the name of song number "<<j<<" (enter 0 to stop): ";
+                getline(cin, line);
+                if(line=="0"){break;}
+                cout<<"Enter the full path of the mp3 (just press Enter for none): ";
+                getline(cin, path);
+                tail->list.addSong(line, path);
+                j++;
+            }
         }
         void allListPrint()
         {
@@ -293,7 +334,9 @@ class LinkerOfPlayLists{
                 Node* ver = hor->list.getHead_0w0();
                 while(ver!=nullptr)
                 {
-                    file<<ver->song_name<<"\n";
+                    file<<ver->song_name;
+                    if(!ver->path.empty()) file<<"|"<<ver->path;
+                    file<<"\n";
                     ver=ver->next;
                 }
                 hor=hor->next;
@@ -326,7 +369,7 @@ class LinkerOfPlayLists{
 
 
             if(currentSong!=nullptr){cout<<"From Playlist "<<currentPlayList->list_name<<"\n";
-                cout<<"Playing "<<currentSong->song_name<<"....\n";}
+                startSong(currentSong);}
             else{cout<<"Empty playlist\n";}
 
 
@@ -335,7 +378,7 @@ class LinkerOfPlayLists{
             {if(!q.queueUnderflow())
             {
                 Box* queued = q.front_peek();
-                cout<<"Playing "<<queued->song->song_name<<"\n";
+                startSong(queued->song);
                 s.push(queued->song,queued->playlist);
                 q.dequeue();
                 return;
@@ -359,7 +402,7 @@ class LinkerOfPlayLists{
                 // ran out of playlists
                 if(currentSong==nullptr){ cout<<"End of all playlists.\n"; return; }
 
-                cout<<"Playing "<<currentSong->song_name<<"....\n";
+                startSong(currentSong);
 
 
 
@@ -372,7 +415,7 @@ class LinkerOfPlayLists{
                     currentSong=s.Top()->song;
                     currentPlayList=s.Top()->playlist;
                     s.pop();
-                    cout<<"Playing "<<currentSong->song_name<<"\n";
+                    startSong(currentSong);
                 }
 
 
@@ -392,6 +435,11 @@ class LinkerOfPlayLists{
                     q.enqueue(ti, it);
 
 
+            }
+            void startSong(Node* n)
+            {
+                cout<<"Playing "<<n->song_name<<"\n";
+                audio.playFile(n->path);
             }
 
         };
