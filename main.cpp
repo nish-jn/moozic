@@ -84,10 +84,6 @@ class LinkedPlayList{
     }
 
 };
-//for all playlists being linked:
-//each linked list here contains its own linked list, consider one of these as the
-// horizontal branch
-
 struct SongNode{
     string list_name;
     LinkedPlayList list;
@@ -101,11 +97,104 @@ struct SongNode{
         prev=nullptr;
     }
 };
+
+struct Box{
+    Node* song;
+    SongNode* playlist;
+    Box* next;
+    Box* prev;
+    Box(Node* sng, SongNode* plist)
+    {
+        song=sng;
+        playlist=plist;
+        next=nullptr;
+        prev=nullptr;
+    }
+};
+class Queue{
+    Box* first; Box* last;
+
+    public:
+    Queue(){first=nullptr; last=first;}
+    bool queueUnderflow()
+    {
+        if(first==nullptr){return true;}
+        else{return false;}
+    }
+
+
+    void enqueue(Node* sng, SongNode* plist)
+    {
+        Box* newBox = new Box(sng, plist);
+        if(first==nullptr){first=newBox; last=first;}
+        else{
+            last->next=newBox;
+            last=last->next;
+        }
+    }
+    void dequeue()
+    {
+        if(queueUnderflow()){cout<<"Queue emptied."; return;}
+        Box* temp=first;
+        first=first->next;
+        delete temp;
+    }
+    Box* front_peek()
+    {
+        return first;
+    }
+
+~Queue(){ while(!queueUnderflow()) dequeue(); }
+};
+
+class Stack{
+    Box* top;
+
+    public:
+        Stack(){top=nullptr;}
+        bool stackUnderflow()
+        {
+            if(top==nullptr){return true;}
+            else{return false;}
+        }
+        void push(Node* sng, SongNode* plist)
+        {
+            Box* newBox = new Box(sng, plist);
+            if(top==nullptr){top=newBox;}
+            else{top->next=newBox;  newBox->prev=top; top=top->next;}
+        }
+
+        void pop()
+        {
+            if(!stackUnderflow())
+            {
+                Box* temp=top;
+                top=top->prev;
+                delete temp;
+            }
+        }
+
+        Box* Top()
+        {
+            return top;
+        }
+        ~Stack(){ while(!stackUnderflow()) pop(); }
+};
+
+
+
+
+//for all playlists being linked:
+//each linked list here contains its own linked list, consider one of these as the
+// horizontal branch
+
 class LinkerOfPlayLists{
     SongNode* head;
     SongNode* tail;
     SongNode* currentPlayList;
     Node* currentSong;
+    Queue q;
+    Stack s;
 
     public:
         int check=0;
@@ -215,7 +304,7 @@ class LinkerOfPlayLists{
         {
             if(check==1){cout<<"The changes made during the session (if any)\n couldnt be saved due to some trouble accessing the library file on storage";}
             else{memorytofile();}
-            memorytofile();
+
          SongNode* temp = head;
          while(temp!=nullptr)
          {
@@ -243,11 +332,20 @@ class LinkerOfPlayLists{
 
             }
             void nextSong()
+            {if(!q.queueUnderflow())
             {
+                Box* queued = q.front_peek();
+                cout<<"Playing "<<queued->song->song_name<<"\n";
+                s.push(queued->song,queued->playlist);
+                q.dequeue();
+                return;
+            }
+
                 // nothing playing (never started, or already ended)
                 if(currentSong==nullptr){ cout<<"Nothing is playing.\n"; return; }
-
+                s.push(currentSong,currentPlayList);
                 currentSong=currentSong->next;
+
 
                 // song list ended: hop forward until a playlist has a song, or we run out
                 while(currentSong==nullptr && currentPlayList!=nullptr)
@@ -262,31 +360,38 @@ class LinkerOfPlayLists{
                 if(currentSong==nullptr){ cout<<"End of all playlists.\n"; return; }
 
                 cout<<"Playing "<<currentSong->song_name<<"....\n";
+
+
+
             }
 
-            void previousSong()
-            {
-                if(currentSong==nullptr){ cout<<"Nothing is playing.\n"; return; }
 
-                // normal case: a song exists before this one in the same playlist
-                if(currentSong->prev!=nullptr)
+                void previousSong()
                 {
-                    currentSong=currentSong->prev;
-                    cout<<"Playing "<<currentSong->song_name<<"....\n";
-                    return;
+                    if(s.stackUnderflow()){ cout<<"No history.\n"; return; }
+                    currentSong=s.Top()->song;
+                    currentPlayList=s.Top()->playlist;
+                    s.pop();
+                    cout<<"Playing "<<currentSong->song_name<<"\n";
                 }
 
-                // first song of this playlist: hop back, skipping empty playlists
-                cout<<"First song of this playlist, moving to previous playlist\n";
-                SongNode* p=currentPlayList->prev;
-                while(p!=nullptr && p->list.getTail()==nullptr)
-                    p=p->prev;
 
-                if(p==nullptr){ cout<<"This is the very first song, nowhere to go back.\n"; return; }
 
-                currentPlayList=p;
-                currentSong=p->list.getTail();   // tail, not head, because we are going backward
-                cout<<"Playing "<<currentSong->song_name<<"....\n";
+            void playNext()
+            {
+                cout<<"Enter playlist name, then song name in this order, for the song to be played next: ";
+                string pn, sn;
+                getline(cin, pn); getline(cin, sn);
+
+                SongNode* it = head;
+                while(it!=nullptr&&it->list_name!=pn){it=it->next;}
+                if(it==nullptr){cout<<"Couldnt find the required playlist! "; return;}
+                Node* ti = it->list.getHead_0w0();
+                while(ti!=nullptr&&ti->song_name!=sn){ti=ti->next;}
+                if(ti==nullptr){cout<<"Couldnt find required song"; return;}
+                    q.enqueue(ti, it);
+
+
             }
 
         };
@@ -316,7 +421,7 @@ int main()
     getline(cin, ln);
     lop.play(ln);
     while(true){
-    cout<<"Enter 1 to go to next song, 2 to go to previous, 3 to add new playlist and songs, 4 to go to another playlist, 0 to exit.\n";
+    cout<<"Enter 1 to go to next song, 2 to go to previous, 3 to add new playlist and songs, 4 to go to another playlist, 5 to add to immediate queue, 0 to exit.\n";
     cin>>x;
     cin.ignore(10000, '\n');
     switch(x){
@@ -327,6 +432,7 @@ int main()
         case 4: cout<<"Enter the name of the playlist to be played: ";
         getline(cin, ln);
         lop.play(ln);break;
+        case 5: lop.playNext(); break;
         default: cout<<"Invalid input, try again. ";
     }
     }
