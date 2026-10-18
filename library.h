@@ -233,5 +233,13 @@ class LinkerOfPlayLists{
                 cout<<"Playing "<<n->song_name<<"\n";
                 audio.playFile(n->path);
             }
+            void music_pause()
+            {
+                audio.pause();
+            }
+            void music_resume()
+            {
+                audio.resume();
+            }
 
         };

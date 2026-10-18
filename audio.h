@@ -19,6 +19,14 @@ public:
     {
         if(soundLoaded){ ma_sound_uninit(&sound); soundLoaded=false; }
     }
+    void pause()
+    {
+        ma_sound_stop(&sound);
+    }
+    void resume()
+    {
+        ma_sound_start(&sound);
+    }
     void playFile(const string& path)
     {
         if(!engineOk) return;

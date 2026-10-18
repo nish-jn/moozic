@@ -25,6 +25,8 @@ void printMenu()
     menuLine("3","Add new playlist and songs");
     menuLine("4","Switch playlist");
     menuLine("5","Add a song to the queue");
+    menuLine("6","Pause the Song");
+    menuLine("7","Resume the Song");
     menuLine("0","Exit");
     cout<<RED<<"╚══════════════════════════════════════╝\n"<<RESET
         <<WHITE<<"Choose: "<<RESET;
@@ -58,6 +60,8 @@ int main()
                     getline(cin, ln);
                     lop.play(ln); break;
             case 5: lop.playNext(); break;
+            case 6: lop.music_pause(); break;
+                case 7: lop.music_resume(); break;
             default: cout<<RED<<"Invalid input, try again.\n"<<RESET;
         }
     }
