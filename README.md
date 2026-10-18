@@ -40,7 +40,7 @@ Song with no file
 
 ## Menu
 
-1 next, 2 previous, 3 add playlist, 4 switch playlist, 5 add to queue, 0 exit
+1 next, 2 previous, 3 add playlist, 4 switch playlist, 5 add to queue, 6 to pause, 7 to resume, 0 exit
 
 ## How it works
 
