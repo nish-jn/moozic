@@ -67,6 +67,11 @@ class LinkedPlayList{
         return head;
     }
 
+    Node* getTail()
+    {
+        return tail;
+    }
+
     ~LinkedPlayList()
     {
         Node* temp=head;
@@ -99,12 +104,17 @@ struct SongNode{
 class LinkerOfPlayLists{
     SongNode* head;
     SongNode* tail;
+    SongNode* currentPlayList;
+    Node* currentSong;
 
     public:
+        int check=0;
         LinkerOfPlayLists()
         {
             head=nullptr;
             tail=head;
+            currentPlayList=nullptr;
+            currentSong=nullptr;
         }
 
         //eats string to give name to a new playlist(names of the vertical branches)
@@ -129,10 +139,10 @@ class LinkerOfPlayLists{
         }
 
 
-        void ftmPlayList() //file to memory.
+        int ftmPlayList() //file to memory.
         {
             ifstream file("text.txt");
-            if(!file.is_open()){cout<<"Error accessing library"; return;}
+            if(!file.is_open()){cout<<"Error accessing library"; return 1;}
 
             string line;
             while(getline(file, line))
@@ -147,11 +157,9 @@ class LinkerOfPlayLists{
 
                 }
                 else if(tail!=nullptr){tail->list.addSong(line);}
-                else {
-                tail->list.addSong(line);//our tail is the last vertical branch in the collection
-                                        //of playlists. So it does add song fn for that branch
-                }
+
             }
+            return 0;
         }
         void utmPlayList()//user to memory
         {
@@ -181,16 +189,7 @@ class LinkerOfPlayLists{
             cout<<endl;
         }
 
-        ~LinkerOfPlayLists()
-        {
-         SongNode* temp = head;
-         while(temp!=nullptr)
-         {
-             SongNode* nxt=temp->next;
-             delete temp;
-             temp = nxt;
-         }
-        }
+
         //writing any changes to file
         void memorytofile()
         {
@@ -212,8 +211,85 @@ class LinkerOfPlayLists{
             }
 
         }
-};
+        ~LinkerOfPlayLists()
+        {
+            if(check==1){cout<<"The changes made during the session (if any)\n couldnt be saved due to some trouble accessing the library file on storage";}
+            else{memorytofile();}
+            memorytofile();
+         SongNode* temp = head;
+         while(temp!=nullptr)
+         {
+             SongNode* nxt=temp->next;
+             delete temp;
+             temp = nxt;
+         }
+        }
 
+        //ACTUAL PLAYER FUNCTIONS START HERE FINALLY, AFTER ALL THE MEMORY STUFF
+        void play(string ln)
+        {
+            SongNode* iterator=head;
+            while(iterator!=nullptr&&iterator->list_name!=ln){iterator=iterator->next;}
+            if(iterator==nullptr){cout<<"Could not find the playlist, cant play."; return;}
+            currentPlayList=iterator;
+
+            currentSong=currentPlayList->list.getHead_0w0();
+
+
+            if(currentSong!=nullptr){cout<<"From Playlist "<<currentPlayList->list_name<<"\n";
+                cout<<"Playing "<<currentSong->song_name<<"....\n";}
+            else{cout<<"Empty playlist\n";}
+
+
+            }
+            void nextSong()
+            {
+                // nothing playing (never started, or already ended)
+                if(currentSong==nullptr){ cout<<"Nothing is playing.\n"; return; }
+
+                currentSong=currentSong->next;
+
+                // song list ended: hop forward until a playlist has a song, or we run out
+                while(currentSong==nullptr && currentPlayList!=nullptr)
+                {
+                    cout<<"Playlist end, moving to next one\n";
+                    currentPlayList=currentPlayList->next;
+                    if(currentPlayList!=nullptr)
+                        currentSong=currentPlayList->list.getHead_0w0();
+                }
+
+                // ran out of playlists
+                if(currentSong==nullptr){ cout<<"End of all playlists.\n"; return; }
+
+                cout<<"Playing "<<currentSong->song_name<<"....\n";
+            }
+
+            void previousSong()
+            {
+                if(currentSong==nullptr){ cout<<"Nothing is playing.\n"; return; }
+
+                // normal case: a song exists before this one in the same playlist
+                if(currentSong->prev!=nullptr)
+                {
+                    currentSong=currentSong->prev;
+                    cout<<"Playing "<<currentSong->song_name<<"....\n";
+                    return;
+                }
+
+                // first song of this playlist: hop back, skipping empty playlists
+                cout<<"First song of this playlist, moving to previous playlist\n";
+                SongNode* p=currentPlayList->prev;
+                while(p!=nullptr && p->list.getTail()==nullptr)
+                    p=p->prev;
+
+                if(p==nullptr){ cout<<"This is the very first song, nowhere to go back.\n"; return; }
+
+                currentPlayList=p;
+                currentSong=p->list.getTail();   // tail, not head, because we are going backward
+                cout<<"Playing "<<currentSong->song_name<<"....\n";
+            }
+
+        };
 
 
 
@@ -221,13 +297,38 @@ int main()
 {
 
     LinkerOfPlayLists lop;
-    lop.ftmPlayList();
+    lop.check=lop.ftmPlayList();
 
-    lop.allListPrint();
+    //lop.allListPrint();
 
-    lop.utmPlayList();
+//    lop.utmPlayList();
 
-    lop.memorytofile();
+    //lop.memorytofile();
 
+    cout<<"Welcome! \nPress 1 to start using the player, something else to exit the program: ";
+    int x; cin>>x; cin.ignore(10000, '\n'); //so the \n doesnt ruin my getline...
+    if(x!=1){cout<<"Terminating..."; return 0;}
+
+
+
+    string ln;
+    cout<<"Enter the name of the playlist to be played: ";
+    getline(cin, ln);
+    lop.play(ln);
+    while(true){
+    cout<<"Enter 1 to go to next song, 2 to go to previous, 3 to add new playlist and songs, 4 to go to another playlist, 0 to exit.\n";
+    cin>>x;
+    cin.ignore(10000, '\n');
+    switch(x){
+        case 0: cout<<"Terminating..."; return 0;
+        case 1: lop.nextSong(); break;
+        case 2: lop.previousSong(); break;
+        case 3: lop.utmPlayList(); break;
+        case 4: cout<<"Enter the name of the playlist to be played: ";
+        getline(cin, ln);
+        lop.play(ln);break;
+        default: cout<<"Invalid input, try again. ";
+    }
+    }
     return 0;
 }
