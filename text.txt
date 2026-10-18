@@ -1,5 +1,0 @@
-#Rock
-Wind of boreas|/home/yourname/music/wind.mp3
-Howl of the snowy wind|/home/yourname/music/howl.mp3
-#Chill
-Moonlit snow
